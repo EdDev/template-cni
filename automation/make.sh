@@ -2,6 +2,8 @@
 
 set -e
 
+ARGCOUNT=$#
+
 EXEC_PATH=$(dirname "$(realpath "$0")")
 PROJECT_PATH="$(dirname $EXEC_PATH)"
 
@@ -15,11 +17,14 @@ CONTAINER_WORKSPACE="/workspace/template-cni"
 test -t 1 && USE_TTY="-t"
 
 options=$(getopt --options "" \
-    --long build,fmt,unit-test,help\
+    --long lint,build,fmt,unit-test,help\
     -- "${@}")
 eval set -- "$options"
 while true; do
     case "$1" in
+    --lint)
+        OPT_LINT=1
+        ;;
     --build)
         OPT_BUILD=1
         ;;
@@ -31,7 +36,7 @@ while true; do
         ;;
     --help)
         set +x
-        echo "$0 [--build] [--fmt] [--unit-test]"
+        echo "$0 [--lint] [--build] [--fmt] [--unit-test]"
         exit
         ;;
     --)
@@ -42,10 +47,19 @@ while true; do
     shift
 done
 
-if [ -z "${OPT_BUILD}" ] && [ -z "${OPT_FMT}" ] && [ -z "${OPT_UTEST}" ]; then
+if [ "${ARGCOUNT}" -eq "0" ]; then
     OPT_BUILD=1
     OPT_FMT=1
+    OPT_LINT=1
     OPT_UTEST=1
+fi
+
+if [ -n "${OPT_LINT}" ]; then
+    golangci_lint_version=v1.53.3
+    if [ ! -f "$(go env GOPATH)"/bin/golangci-lint ]; then
+        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$(go env GOPATH)"/bin $golangci_lint_version
+    fi
+    golangci-lint run -v cmd/... pkg/...
 fi
 
 if [ -n "${OPT_BUILD}" ]; then
