@@ -36,7 +36,7 @@ func CmdAdd(args *skel.CmdArgs) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("\nEnvArgs: %+v", envArgs)
+	fmt.Printf("\nEnvArgs: %+v\nargs: %s", envArgs, args.Args)
 
 	return nil
 }
