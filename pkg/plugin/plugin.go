@@ -22,7 +22,10 @@ package plugin
 import (
 	"fmt"
 
+	"github.com/eddev/template-cni/pkg/plugin/netlink"
+
 	"github.com/containernetworking/cni/pkg/skel"
+	"github.com/containernetworking/plugins/pkg/ns"
 )
 
 func CmdAdd(args *skel.CmdArgs) error {
@@ -38,7 +41,27 @@ func CmdAdd(args *skel.CmdArgs) error {
 	}
 	fmt.Printf("\nEnvArgs: %+v\nargs: %s", envArgs, args.Args)
 
-	return nil
+	if args.IfName == "" {
+		// Nothing to do (probably not a fit in production).
+		return nil
+	}
+
+	netns, err := ns.GetNS(args.Netns)
+	if err != nil {
+		return fmt.Errorf("failed to open netns %q: %v", netns, err)
+	}
+	defer netns.Close()
+
+	err = netns.Do(func(_ ns.NetNS) error {
+		dummy := netlink.NewDummy(args.IfName)
+		if lerr := netlink.CreateLink(dummy); lerr != nil {
+			return lerr
+		}
+		fmt.Printf("dummy link %s created", dummy.Name)
+		return nil
+	})
+
+	return err
 }
 
 func CmdDel(args *skel.CmdArgs) error {
