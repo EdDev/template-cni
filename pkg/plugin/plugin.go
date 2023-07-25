@@ -25,32 +25,39 @@ import (
 	"github.com/eddev/template-cni/pkg/plugin/netlink"
 
 	"github.com/containernetworking/cni/pkg/skel"
+	"github.com/containernetworking/cni/pkg/types"
+	type100 "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/containernetworking/plugins/pkg/ns"
 )
 
 func CmdAdd(args *skel.CmdArgs) error {
-	netConf, cniVersion, err := loadConf(args.StdinData)
+	result, err := CmdAddResult(args)
 	if err != nil {
 		return err
+	}
+	return result.Print()
+}
+
+func CmdAddResult(args *skel.CmdArgs) (types.Result, error) {
+	netConf, cniVersion, err := loadConf(args.StdinData)
+	if err != nil {
+		return nil, err
 	}
 	fmt.Printf("\nCNI Version: %s\nNetConf: %+v\nstdin: %s", cniVersion, netConf, string(args.StdinData))
 
 	envArgs, err := getEnvArgs(args.Args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fmt.Printf("\nEnvArgs: %+v\nargs: %s", envArgs, args.Args)
 
-	if args.IfName == "" {
-		// Nothing to do (probably not a fit in production).
-		return nil
-	}
-
 	netns, err := ns.GetNS(args.Netns)
 	if err != nil {
-		return fmt.Errorf("failed to open netns %q: %v", netns, err)
+		return nil, fmt.Errorf("failed to open netns %q: %v", netns, err)
 	}
 	defer netns.Close()
+
+	result := type100.Result{CNIVersion: cniVersion}
 
 	err = netns.Do(func(_ ns.NetNS) error {
 		dummy := netlink.NewDummy(args.IfName)
@@ -58,10 +65,24 @@ func CmdAdd(args *skel.CmdArgs) error {
 			return lerr
 		}
 		fmt.Printf("dummy link %s created", dummy.Name)
+
+		dummyLink, lerr := netlink.ReadLink(dummy.Name)
+		if lerr != nil {
+			return lerr
+		}
+
+		result.Interfaces = append(result.Interfaces, &type100.Interface{
+			Name:    dummyLink.Attrs().Name,
+			Mac:     "00:00:00:00:00:01",
+			Sandbox: netns.Path(),
+		})
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return err
+	return &result, nil
 }
 
 func CmdDel(args *skel.CmdArgs) error {

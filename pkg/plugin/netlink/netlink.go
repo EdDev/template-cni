@@ -30,3 +30,7 @@ func NewDummy(name string) *netlink.Dummy {
 func CreateLink(link netlink.Link) error {
 	return netlink.LinkAdd(link)
 }
+
+func ReadLink(name string) (netlink.Link, error) {
+	return netlink.LinkByName(name)
+}

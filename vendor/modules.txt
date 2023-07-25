@@ -12,6 +12,7 @@ github.com/containernetworking/cni/pkg/version
 # github.com/containernetworking/plugins v1.3.0
 ## explicit; go 1.20
 github.com/containernetworking/plugins/pkg/ns
+github.com/containernetworking/plugins/pkg/testutils
 github.com/containernetworking/plugins/pkg/utils/buildversion
 # github.com/go-logr/logr v1.2.4
 ## explicit; go 1.16
