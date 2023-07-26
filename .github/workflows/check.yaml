@@ -37,4 +37,4 @@ jobs:
       with:
         go-version-file: 'go.mod'
     - name: Run unit tests
-      run: ./automation/make.sh --unit-test
+      run: sudo ./automation/make.sh --unit-test
