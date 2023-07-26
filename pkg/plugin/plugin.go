@@ -21,6 +21,7 @@ package plugin
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/eddev/template-cni/pkg/plugin/netlink"
 
@@ -43,13 +44,13 @@ func CmdAddResult(args *skel.CmdArgs) (types.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("\nCNI Version: %s\nNetConf: %+v\nstdin: %s", cniVersion, netConf, string(args.StdinData))
+	log.Printf("\nCNI Version: %s\nNetConf: %+v\nstdin: %s", cniVersion, netConf, string(args.StdinData))
 
 	envArgs, err := getEnvArgs(args.Args)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("\nEnvArgs: %+v\nargs: %s", envArgs, args.Args)
+	log.Printf("\nEnvArgs: %+v\nargs: %s", envArgs, args.Args)
 
 	netns, err := ns.GetNS(args.Netns)
 	if err != nil {
@@ -64,7 +65,7 @@ func CmdAddResult(args *skel.CmdArgs) (types.Result, error) {
 		if lerr := netlink.CreateLink(dummy); lerr != nil {
 			return lerr
 		}
-		fmt.Printf("dummy link %s created", dummy.Name)
+		log.Printf("dummy link %s created", dummy.Name)
 
 		dummyLink, lerr := netlink.ReadLink(dummy.Name)
 		if lerr != nil {
