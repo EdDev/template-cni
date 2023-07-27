@@ -29,6 +29,14 @@ import (
 // A NetConf structure represents a Multus network attachment definition configuration
 type NetConf struct {
 	types.NetConf
+
+	Args struct {
+		Cni CniArgs `json:"cni,omitempty"`
+	} `json:"args,omitempty"`
+}
+
+type CniArgs struct {
+	Name string `json:"name,omitempty"`
 }
 
 // EnvArgs structure represents inputs sent from each VMI via environment variables

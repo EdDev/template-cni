@@ -60,8 +60,13 @@ func CmdAddResult(args *skel.CmdArgs) (types.Result, error) {
 
 	result := type100.Result{CNIVersion: cniVersion}
 
+	ifName := args.IfName
+	if name := netConf.Args.Cni.Name; name != "" {
+		ifName = name
+	}
+	dummy := netlink.NewDummy(ifName)
+
 	err = netns.Do(func(_ ns.NetNS) error {
-		dummy := netlink.NewDummy(args.IfName)
 		if lerr := netlink.CreateLink(dummy); lerr != nil {
 			return lerr
 		}
